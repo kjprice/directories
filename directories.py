@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from typing import Dict, Optional
+
 _HELP = """Valid commands:
  - CREATE path/name
  - DELETE path/name
@@ -11,20 +13,38 @@ _HELP = """Valid commands:
 _DIRECTORY = {"/": {}}
 
 
-def create(path: str) -> None:
+def print_error(message):
+    print(message)
+
+
+def create(full_path: str) -> None:
+    _dir = _DIRECTORY["/"]
+    pieces = full_path.split("/")
+    # TODO: Make sure that this is supposed to work like mkdir -p
+    for path in pieces:
+        if not path in _dir:
+            _dir[path] = {}
+        _dir = _dir[path]
+
+
+def delete(full_path: str) -> None:
     pass
 
 
-def delete(path: str) -> None:
+def move(full_path1: str, full_path2: str) -> None:
     pass
 
 
-def move(path1: str, path2: str) -> None:
-    pass
+def _list_with_indent(obj: Optional[Dict], indent=0):
+    if not obj:
+        return
+    for path, paths in obj.items():
+        print(" " * indent + path)
+        _list_with_indent(paths, indent + 1)
 
 
 def list() -> None:
-    pass
+    _list_with_indent(_DIRECTORY["/"])
 
 
 def help() -> None:
@@ -55,15 +75,15 @@ def main():
             args = _args.split(" ")
 
         if not command in _COMMANDS:
-            print("Invalid command")
-            print(_HELP)
+            print_error("Invalid command")
+            print_error(_HELP)
         else:
             try:
                 _COMMANDS[command](*args)
             except TypeError as e:
                 if "positional arguments but" in str(e):
-                    print("Invalid arguments provided")
-                    print(_HELP)
+                    print_error("Invalid arguments provided")
+                    print_error(_HELP)
                 else:
                     raise e
 
