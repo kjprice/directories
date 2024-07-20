@@ -70,32 +70,36 @@ _COMMANDS = {
 }
 
 
+def run_full_command(full_command: str):
+    command = None
+    args = []
+    if not " " in full_command:
+        command = full_command.lower()
+    else:
+        command, _, _args = full_command.partition(" ")
+        command = command.lower()
+        args = _args.split(" ")
+
+    if not command in _COMMANDS:
+        print_error("Invalid command")
+        print_error(_HELP)
+    else:
+        try:
+            _COMMANDS[command](*args)
+        except TypeError as e:
+            if "positional arguments but" in str(e):
+                print_error("Invalid arguments provided")
+                print_error(_HELP)
+            else:
+                raise e
+
+
 def main():
     print(_HELP)
 
     while True:
         full_command = input("")
-        command = None
-        args = []
-        if not " " in full_command:
-            command = full_command.lower()
-        else:
-            command, _, _args = full_command.partition(" ")
-            command = command.lower()
-            args = _args.split(" ")
-
-        if not command in _COMMANDS:
-            print_error("Invalid command")
-            print_error(_HELP)
-        else:
-            try:
-                _COMMANDS[command](*args)
-            except TypeError as e:
-                if "positional arguments but" in str(e):
-                    print_error("Invalid arguments provided")
-                    print_error(_HELP)
-                else:
-                    raise e
+        run_full_command(full_command)
 
 
 if __name__ == "__main__":
