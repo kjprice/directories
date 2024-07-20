@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-_HELP = """
-Valid commands:
+_HELP = """Valid commands:
  - CREATE path/name
  - DELETE path/name
  - MOVE path1/name path2/name
  - LIST
  - HELP
 """
+
+_DIRECTORY = {"/": {}}
 
 
 def create(path: str) -> None:
@@ -54,10 +55,17 @@ def main():
             args = _args.split(" ")
 
         if not command in _COMMANDS:
-            print("Invalid command.")
+            print("Invalid command")
             print(_HELP)
         else:
-            _COMMANDS[command](*args)
+            try:
+                _COMMANDS[command](*args)
+            except TypeError as e:
+                if "positional arguments but" in str(e):
+                    print("Invalid arguments provided")
+                    print(_HELP)
+                else:
+                    raise e
 
 
 if __name__ == "__main__":
