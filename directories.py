@@ -10,117 +10,107 @@ _HELP = """Valid commands:
  - HELP
 """
 
-_DIRECTORY = None
-
-
-def reset():
-    global _DIRECTORY
-    _DIRECTORY = {"/": {}}
-
-
-def get_root():
-    return _DIRECTORY["/"]
-
-
-reset()
-
 
 def print_error(message):
     print(message)
-
-
-def create(full_path: str) -> None:
-    _dir = _DIRECTORY["/"]
-    pieces = full_path.split("/")
-    # TODO: Make sure that this is supposed to work like mkdir -p
-    for path in pieces:
-        if not path in _dir:
-            _dir[path] = {}
-        _dir = _dir[path]
-
-
-def delete(full_path: str) -> None:
-    _dir = _DIRECTORY["/"]
-    pieces = full_path.split("/")
-    last_path = pieces[-1]
-    for path in pieces[:-1]:
-        if not path in _dir:
-            print_error(f"Cannot delete {full_path} - {path} does not exist")
-            return
-        _dir = _dir[path]
-
-    if last_path in _dir:
-        del _dir[last_path]
-
-
-def get(full_path: str) -> Optional[Dict]:
-    _dir = _DIRECTORY["/"]
-    for path in full_path.split("/"):
-        if not path in _dir:
-            return None
-        _dir = _dir[path]
-    return _dir
-
-
-""" TODO: Test:
-full_path1 does not exist
-full_path2 already exists
-full_path2 does not exist (subpath)
-full_path2 does not exist (full path)
-
-Make sure that last dir in full_path1 is deleted
-Make sure that new dir exists in full_path2
-
-TODO: This is broken:
-create 1/2/3/4
-move 1/2 2/3
-"""
-
-
-def move(full_path1: str, full_path2: str) -> None:
-    pieces1 = full_path1.split("/")
-    last_path1 = pieces1[-1]
-    paths_from = get(full_path1)
-    if paths_from is None:
-        print_error(f"Cannot move {full_path1} - subpath does not exist")
-        return
-
-    create(full_path2)
-    path_to = get(full_path2)
-
-    path_to[last_path1] = paths_from
-    delete(full_path1)
-
-
-def _list_with_indent(obj: Optional[Dict], indent=0):
-    if not obj:
-        return
-    keys = sorted(obj.keys())
-
-    for path in keys:
-        paths = obj[path]
-        print("  " * indent + path)
-        _list_with_indent(paths, indent + 1)
-
-
-def list() -> None:
-    _list_with_indent(_DIRECTORY["/"])
 
 
 def help() -> None:
     print(_HELP)
 
 
+class Directory:
+    def __init__(self) -> None:
+        self.directory = None
+        self.reset()
+
+    def reset(self):
+        """Helper for testing"""
+        self.directory = {"/": {}}
+
+    @property
+    def root(self):
+        """Simply returns the root directory (children of "/")"""
+        return self.directory["/"]
+
+    def create(self, full_path: str) -> None:
+        """Mutates self.directory. Works same as `mkdir -p`: deeply creates paths if they do not exist"""
+        _dir = self.root
+        pieces = full_path.split("/")
+        # TODO: Make sure that this is supposed to work like mkdir -p
+        for path in pieces:
+            if not path in _dir:
+                _dir[path] = {}
+            _dir = _dir[path]
+
+    def delete(self, full_path: str) -> None:
+        """Mutates self.directory. Deletes deepest directory if exists."""
+        _dir = self.root
+        pieces = full_path.split("/")
+        last_path = pieces[-1]
+        for path in pieces[:-1]:
+            if not path in _dir:
+                print_error(f"Cannot delete {full_path} - {path} does not exist")
+                return
+            _dir = _dir[path]
+
+        if last_path in _dir:
+            del _dir[last_path]
+
+    def _get(self, full_path: str) -> Optional[Dict]:
+        """Helper function to retrieve directory object from nested paths"""
+        _dir = self.root
+        for path in full_path.split("/"):
+            if not path in _dir:
+                return None
+            _dir = _dir[path]
+        return _dir
+
+    def move(self, full_path1: str, full_path2: str) -> None:
+        """Mutates self.directory. Adds the last path (and descendents) from full_path1 to the end of full_path2.
+        Will overwrite Data. Deletes the last path from full_path1."""
+        pieces1 = full_path1.split("/")
+        last_path1 = pieces1[-1]
+        paths_from = self._get(full_path1)
+        if paths_from is None:
+            print_error(f"Cannot move {full_path1} - subpath does not exist")
+            return
+
+        self.create(full_path2)
+        path_to = self._get(full_path2)
+
+        path_to[last_path1] = paths_from
+        self.delete(full_path1)
+
+    def _list_with_indent(self, obj: Optional[Dict], indent=0):
+        """Helper. Allows to recursively print with indententaion"""
+        if not obj:
+            return
+        keys = sorted(obj.keys())
+
+        for path in keys:
+            paths = obj[path]
+            print("  " * indent + path)
+            self._list_with_indent(paths, indent + 1)
+
+    def list(self) -> None:
+        self._list_with_indent(self.root)
+
+
+directory = Directory()
+
+
 _COMMANDS = {
-    "create": create,
-    "delete": delete,
-    "move": move,
-    "list": list,
+    "create": directory.create,
+    "delete": directory.delete,
+    "move": directory.move,
+    "list": directory.list,
     "help": help,
 }
 
 
 def run_full_command(full_command: str):
+    """Takes any valid command (eg. "create vegetables") and runs the corresponding function"""
     command = None
     args = []
     if not " " in full_command:
@@ -145,6 +135,7 @@ def run_full_command(full_command: str):
 
 
 def main():
+    """Main method - continuously listens for user input, runs provided command"""
     print(_HELP)
 
     while True:
