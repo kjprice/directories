@@ -78,32 +78,27 @@ move 1/2 2/3
 
 
 def move(full_path1: str, full_path2: str) -> None:
+    pieces1 = full_path1.split("/")
+    last_path1 = pieces1[-1]
     paths_from = get(full_path1)
     if paths_from is None:
         print_error(f"Cannot move {full_path1} - subpath does not exist")
         return
 
-    if get(full_path2) is not None:
-        print_error(
-            f"Cannot move {full_path1} - the path {full_path2} exists and would be overridden"
-        )
-        return
+    create(full_path2)
+    path_to = get(full_path2)
 
-    pieces2 = full_path2.split("/")
-    last_path2 = pieces2[-1]
-    path_to = get("/".join(pieces2[:-1]))
-    if path_to is None:
-        create(full_path2)
-        path_to = get("/".join(pieces2[:-1]))
-
-    path_to[last_path2] = paths_from
+    path_to[last_path1] = paths_from
     delete(full_path1)
 
 
 def _list_with_indent(obj: Optional[Dict], indent=0):
     if not obj:
         return
-    for path, paths in obj.items():
+    keys = sorted(obj.keys())
+
+    for path in keys:
+        paths = obj[path]
         print("  " * indent + path)
         _list_with_indent(paths, indent + 1)
 
