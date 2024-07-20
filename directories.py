@@ -14,6 +14,7 @@ _DIRECTORY = None
 
 
 def reset():
+    global _DIRECTORY
     _DIRECTORY = {"/": {}}
 
 
@@ -77,8 +78,7 @@ move 1/2 2/3
 
 
 def move(full_path1: str, full_path2: str) -> None:
-    pieces1 = full_path1.split("/")
-    paths_from = get("/".join(pieces1[:-1]))
+    paths_from = get(full_path1)
     if paths_from is None:
         print_error(f"Cannot move {full_path1} - subpath does not exist")
         return
