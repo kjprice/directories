@@ -41,8 +41,52 @@ def delete(full_path: str) -> None:
         del _dir[last_path]
 
 
+def get(full_path: str) -> Optional[Dict]:
+    _dir = _DIRECTORY["/"]
+    for path in full_path.split("/"):
+        if not path in _dir:
+            return None
+        _dir = _dir[path]
+    return _dir
+
+
+""" TODO: Test:
+full_path1 does not exist
+full_path2 already exists
+full_path2 does not exist (subpath)
+full_path2 does not exist (full path)
+
+Make sure that last dir in full_path1 is deleted
+Make sure that new dir exists in full_path2
+
+TODO: This is broken:
+create 1/2/3/4
+move 1/2 2/3
+"""
+
+
 def move(full_path1: str, full_path2: str) -> None:
-    pass
+    pieces1 = full_path1.split("/")
+    paths_from = get("/".join(pieces1[:-1]))
+    if paths_from is None:
+        print_error(f"Cannot move {full_path1} - subpath does not exist")
+        return
+
+    if get(full_path2) is not None:
+        print_error(
+            f"Cannot move {full_path1} - the path {full_path2} exists and would be overridden"
+        )
+        return
+
+    pieces2 = full_path2.split("/")
+    last_path2 = pieces2[-1]
+    path_to = get("/".join(pieces2[:-1]))
+    if path_to is None:
+        create(full_path2)
+        path_to = get("/".join(pieces2[:-1]))
+
+    path_to[last_path2] = paths_from
+    delete(full_path1)
 
 
 def _list_with_indent(obj: Optional[Dict], indent=0):
