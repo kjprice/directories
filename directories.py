@@ -28,7 +28,17 @@ def create(full_path: str) -> None:
 
 
 def delete(full_path: str) -> None:
-    pass
+    _dir = _DIRECTORY["/"]
+    pieces = full_path.split("/")
+    last_path = pieces[-1]
+    for path in pieces[:-1]:
+        if not path in _dir:
+            print_error(f"Cannot delete {full_path} - {path} does not exist")
+            return
+        _dir = _dir[path]
+
+    if last_path in _dir:
+        del _dir[last_path]
 
 
 def move(full_path1: str, full_path2: str) -> None:
