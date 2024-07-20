@@ -104,7 +104,7 @@ def _list_with_indent(obj: Optional[Dict], indent=0):
     if not obj:
         return
     for path, paths in obj.items():
-        print(" " * indent + path)
+        print("  " * indent + path)
         _list_with_indent(paths, indent + 1)
 
 

@@ -1,6 +1,8 @@
+from io import StringIO
 from unittest import TestCase
+from unittest.mock import patch
 
-from directories import reset, run_full_command, get_root
+from directories import get_root, list, reset, run_full_command
 
 
 class TestDirectories(TestCase):
@@ -35,3 +37,10 @@ class TestDirectories(TestCase):
             {"1": {}, "5": {"6": {"3": {"4": {}}}}},
             get_root(),
         )
+
+    def test_list(self):
+        run_full_command("create 1/2")
+
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            list()
+            self.assertEqual(fake_out.getvalue(), "1\n  2\n")
