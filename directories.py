@@ -10,7 +10,18 @@ _HELP = """Valid commands:
  - HELP
 """
 
-_DIRECTORY = {"/": {}}
+_DIRECTORY = None
+
+
+def reset():
+    _DIRECTORY = {"/": {}}
+
+
+def get_root():
+    return _DIRECTORY["/"]
+
+
+reset()
 
 
 def print_error(message):
